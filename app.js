@@ -38,6 +38,16 @@ for (const row in json) {
 // cuando tengas que ejecutar en una sola vez lo mejor sera hacerlo en dos foreach
 
 var iterador = 0;
+var penultimoPush = Object();
+var ultimoPush = Object();
+var falta_s = 0;
+var pide_s = 0;
+var sale_s = Infinity;
+
+var entra_i = 0;
+var queda_i = 0;
+var tiene_i = 0;
+
 copia_material_ingresos = material_ingresos;
 
 for(let i = 0; i < material_ingresos.length; i++) {
@@ -46,54 +56,58 @@ for(let i = 0; i < material_ingresos.length; i++) {
 
     // salida por cada ingreso
     do {
-        
         let salida = salidas[iterador];
         while (salida.material_id == materialIngreso.material_id) {
+            has_salida = true;
 
-            var saque = salida.cantidad;
-
-            if (salida.cantidad > materialIngreso.cantidad) {
-                saque = materialIngreso.cantidad;
-                salida.cantidad = salida.cantidad - materialIngreso.cantidad;
-                materialIngreso.cantidad = 0;
+            if (materialIngreso.material_id == "023179cef9814fe88e8f7c0ec8ee4a32") {
+                debugger;
             }
 
-            out.push({
+            pide_s = salida.cantidad;
+            if (sale_s >= pide_s) {
+                sale_s = salida.cantidad;
+            }
+            
+            entra_i = materialIngreso.cantidad;
+            tiene_i = materialIngreso.cantidad;
+            
+            var saque = sale_s;
+            if (sale_s > entra_i) {
+                var saque = entra_i;
+            }
+
+            encolar({
                 salida: salida.id,
                 material_ingreso: materialIngreso.id,
                 cantidad: saque,
-            });
-            has_salida = true;
+            })
 
-            materialIngreso.cantidad = materialIngreso.cantidad - salida.cantidad;
-
-            if (materialIngreso.cantidad == 0) {
+            queda_i = entra_i - saque;
+            if (queda_i == 0) {
                 i++;
                 materialIngreso = material_ingresos[i];
             }
-
-            if (materialIngreso.cantidad < 0) {
-                saque = -(materialIngreso.cantidad);
-
-                i++;
-                materialIngreso = material_ingresos[i];
-                materialIngreso.cantidad = materialIngreso.cantidad - saque;
-
-                out.push({
-                    salida: salida.id,
-                    material_ingreso: materialIngreso.id,
-                    cantidad: saque,
-                });
+            else{
+                materialIngreso.cantidad = queda_i;
             }
 
-            iterador++;
-            salida = salidas[iterador];
+            falta_s = sale_s - saque;
+            if (falta_s == 0) {
+                iterador++;
+                salida = salidas[iterador];
+                sale_s = salida.cantidad;
+            }
+            else{
+                sale_s = falta_s;
+            }
         }
 
         if (!has_salida) {
             has_salida = true;
         }
 
+        sale_s = Infinity;
         //#region for(let j = iterador; j < salidas.length;) {
             /*
             let salida = salidas[j];
@@ -125,6 +139,15 @@ for(let i = 0; i < material_ingresos.length; i++) {
     exportarExcel(out)
 }
 
+function name(params) {
+    
+}
+
+function encolar(entrada_salida) {
+    out.push(entrada_salida);
+    penultimoPush = out[out.length - 2];
+    ultimoPush = out[out.length - 1];
+}
 
 function exportarExcel(data) {
     var ws = XLSX.utils.json_to_sheet(data);
